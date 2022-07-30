@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSS File -->
+    <link rel="stylesheet" type="text/css" href="game.css">
+    <title>SNEK GAEM</title>
+
+    <!-- Scripts -->
+    <script defer src="js/timer-min.js"></script>
+    <script defer src="js/game.js"></script>
+</head>
+<body>
+    <!-- Play snake online -->
+    <h1>SNEK GAEM</h1>
+
+    <!-- Main wrapper -->
+    <div id="wrapper">
+
+        <!-- Left side of wrapper -->
+        <div class="side-container">
+            <h1>SNEK GAEM</h1>
+        </div>
+        
+        <div>
+            <!-- Game settings window -->
+            <div id="settings">
+                <h2 id='difficulty'></h2>
+                <h2 id='snakespeed'></h2>
+                <h1 id='score'></h1>
+                <button id='game-music' title='Play music'></button>
+            </div>
+
+            <!-- Game Container -->
+            <div id="game-container" tabindex="0">
+            </div>
+        </div>
+
+        <!-- Right side of wrapper -->
+        <div class="side-container">
+            <h1>SNEK GAEM</h1>
+        </div>
+
+        <!-- Dark overlay -->
+        <div class="dark-overlay"  tabindex="1">
+            
+            <!-- Game dialog -->
+            <div id="dialog-start" class="dialog">
+                <img src="resources/images/artwork.png" alt="">
+                <h2>Snek gaem</h2>
+                <p></p>
+                <button id='start-game'>Start</button>
+                <h3>Change difficulty:</h3>
+                <button class='difficulty-button' data-snakespeed='200'>Easy</button>
+                <button class='difficulty-button active' data-snakespeed='100'>Normal</button>
+                <button class='difficulty-button' data-snakespeed='50'>Hard</button>
+                <button class='difficulty-button' data-snakespeed='25'>Asian</button>
+                <p style='text-align: left; padding: 10px;'>Tips:<br>
+                    press P to pause the game<br>
+                    press M to toggle music<br>
+                    consuming 💊 turns you invincible<br>
+                    consuming 💥 reduces snake size
+                </p>
+            </div>
+
+            <div id="paused" class='hidden'>
+                <h1>Game paused</h1>
+                <p>press P to resume</p>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
