@@ -79,12 +79,10 @@ button#game-music:focus {
 
 /* The game's containers */
 div#game-container {
-    background: url('resources/images/bg.png');
-    border: 10px solid transparent;
-    border-image: url('resources/images/border-image.png') 33% repeat;
+    background: url(resources/images/bg.png);
+    border: 5px solid #9a6de8;
     position: relative;
     outline: none;
-    border-radius: 7px;
 }
 
 div.dark-overlay {
@@ -143,7 +141,7 @@ div.dialog h2, div.dialog h3 {
     text-align: center;
 }
 
-div.dialog button {
+button {
     font-family: monospace;
     margin: 10px 0;
     border-radius: 3px;
@@ -155,15 +153,15 @@ div.dialog button {
 }
 
 /* Button on hover and press */
-div.dialog button:hover {
+button:hover {
     background-color: #8c5edb;
 }
 
-div.dialog button:active {
+button:active {
     background-color: #7645cc;
 }
 
-div.dialog button:focus {
+button:focus {
     background-color: #8c5edb;
     border: 1px solid white;
 }

@@ -2,12 +2,16 @@
 const settingsWindow = document.querySelector('#settings');
 const gameContainer = document.querySelector('#game-container'); //Game container / playground
 const gameDarkOverlay = document.querySelector('.dark-overlay'); //Game dialog
-const startButton = document.querySelector('#start-game'); //Game start/restart button
+const startButton = document.querySelector('#start-game'); //Start button
+const restartButton = document.querySelector('#restart-game'); //Restart button
 const gameMusicButton = document.querySelector('#game-music');
 const foodSound = new Audio(); //The sound effect for food consumption
 const gameMusic = new Audio(); //Game music handler
 const moveValue = 25; //Do not change this
-//If changing dimensions, make sure it is divisibile by 25
+/**
+ * Calculating game container size based on the screen size
+ */
+const screenDimensions = {w: document.documentElement["clientWidth"], h: document.documentElement["clientHeight"]};
 const gameContainerWidth = 600;
 const gameContainerHeight = 600;
 const gameContainerBounds = [
@@ -67,9 +71,9 @@ gameContainer.style.width = gameContainerWidth + 'px';
 gameContainer.style.height = gameContainerHeight + 'px';
 gameDarkOverlay.style.width = gameContainerWidth + 'px';
 gameDarkOverlay.style.height = gameContainerHeight + 'px';
-document.querySelector('#difficulty').innerText = `Difficulty: ${gameDifficulty}`;
-document.querySelector('#snakespeed').innerHTML = `Speed: ${snakeSpeed}px/sec`;
-document.querySelector('#score').innerText = `Score: ${gameScore}`;
+document.querySelector('#difficulty').textContent = `Difficulty: ${gameDifficulty}`;
+document.querySelector('#snakespeed').textContent = `Speed: ${snakeSpeed}px/sec`;
+document.querySelector('#score').textContent = `Score: ${gameScore}`;
 gameMusic.src = 'resources/music/mainmenu.mp3';
 gameMusic.loop = true;
 gameMusicButton.style.backgroundImage = 'url(resources/images/play-btn.png)';
@@ -79,13 +83,21 @@ foodSound.volume = 0.5;
 
 //Starting the game
 const startGame = () => {
+    // Removing snake
+    if (snakeBody) snakeBody.forEach(body => body.remove());
 
-    //Deleting old snake figure if exists
-    if (snakeBody) gameContainer.querySelectorAll('.snake-body').forEach(body => body.remove());
+    //Destroy all timers
+    [powerupTimeout, inedibleTimeout, consumedInedible, invincibleTimeout].forEach(timeout => timeout?.destroy());
+    gameTimeout?.destroy();
+    gameTimeout = null;
+
+    //Remove any items on the field
+    [food, powerup, inedible].forEach(item => item?.remove());
 
     //Initializing variables
+    paused = false;
     snakeHead = document.createElement('div');
-    snakeHead.setAttribute('id', 'snake-head');
+    snakeHead.id = "snake-head";
     snakeHead.classList.add('snake-body');
     gameContainer.append(snakeHead);
     snakeBody = [snakeHead];
@@ -108,51 +120,41 @@ const startGame = () => {
     //Hiding dialog
     gameDarkOverlay.classList.add('hidden');
 
-    //Updating game settings window
-    document.querySelector('#difficulty').innerText = `Difficulty: ${gameDifficulty}`;
-    document.querySelector('#snakespeed').innerText = `Snek's speed: ${snakeSpeed}px/sec`;
+    //Resetting game settings window
+    document.querySelector('#difficulty').textContent = `Difficulty: ${gameDifficulty}`;
+    document.querySelector('#snakespeed').textContent = `Snek's speed: ${snakeSpeed}px/sec`;
+    document.querySelector('#score').textContent = `Score: ${gameScore}`;
+
+    // Reset modals if game restarted using pause menu
+    gameDarkOverlay.querySelector('#dialog-start').classList.remove('hidden');
+    gameDarkOverlay.querySelector('#paused').classList.add('hidden');
 
     //Focusing gameContainer
     gameContainer.focus();
 
     //Playing game music
     gameMusic.src = `resources/music/music${Math.floor( Math.random() * 2 ) + 1}.mp3`;
+    gameMusic.volume = 1;
     if (!gameMusicPaused) gameMusic.play();
 
-    //Starting the game function and move snake function
-    gameTimeout = new Timer(gameFunction, gameInterval, true);
+    //Starting the game
+    gameFunction();
 }
 //Attaching event handlers to startGame function
 window.addEventListener('keydown', e => { if (e.key == 'Enter' && !gameTimeout) startGame(); });
-startButton.addEventListener('click', e => { if (!gameTimeout) startGame(); });
+[startButton, restartButton].forEach(elem => elem.addEventListener('click', e => startGame()));
 
 //Game lost
 const gameLost = () => {
-
-    //Destroy all pending intervals
+    //Destroy all timers
+    [powerupTimeout, inedibleTimeout, consumedInedible, invincibleTimeout].forEach(timeout => timeout?.destroy());
     gameTimeout.destroy();
-    powerupTimeout.destroy();
-    inedibleTimeout.destroy();
-    consumedInedible.destroy();
-    invincibleTimeout.destroy();
-    consumedInedible = null;
-    inedibleTimeout = null;
-    powerupTimeout = null;
     gameTimeout = null;
-    invincibleTimeout = null;
-
-    //Remove any items on the field
-    [food, powerup, inedible].forEach(item => {
-        if (item){
-            item.remove();
-            item = null;
-        }
-    });
 
     //Edit dialog content
     gameDarkOverlay.querySelector('h2').innerText = 'Your snek has :(';
     gameDarkOverlay.querySelector('p').innerText = `Your score: ${gameScore}\nDifficulty: ${gameDifficulty}`;
-    gameDarkOverlay.querySelector('button').innerText = 'Restart';
+    gameDarkOverlay.querySelector('#start-game').innerText = 'Restart';
 
     //Playing game lost music
     gameMusic.src = `resources/music/lost${Math.floor( Math.random() * 2 ) + 1}.mp3`;
@@ -169,11 +171,7 @@ window.addEventListener('keydown', e => {
         //Pause the game
         if (!paused){
             paused = true;
-            gameTimeout.pause();
-            if (consumedInedible) consumedInedible.pause();
-            if (inedibleTimeout) inedibleTimeout.pause();
-            if (invincibleTimeout) invincibleTimeout.pause();
-            if (powerupTimeout) powerupTimeout.pause();
+            [gameTimeout, consumedInedible, inedibleTimeout, invincibleTimeout, powerupTimeout].forEach(timeout => timeout?.pause());
             gameContainer.focus();
 
             //Display paused overlay
@@ -188,11 +186,7 @@ window.addEventListener('keydown', e => {
         //Resume the game
         else {
             paused = false;
-            gameTimeout.resume();
-            if (consumedInedible) consumedInedible.resume();
-            if (inedibleTimeout) inedibleTimeout.resume();
-            if (invincibleTimeout) invincibleTimeout.resume();
-            if (powerupTimeout) powerupTimeout.resume();
+            [gameTimeout, consumedInedible, inedibleTimeout, invincibleTimeout, powerupTimeout].forEach(timeout => timeout?.resume());
             gameContainer.focus();
 
             //Hide paused overlay
@@ -252,17 +246,17 @@ gameContainer.addEventListener('keydown', e => {
 
         //Preventing snake to move left or right into itself by disabling the opposite direction of the snake's current movement
         if (
-                ['Up', 'Down'].includes(snakeDirection) && !['ArrowDown', 'ArrowUp'].includes(e.key) ||
-                ['Left', 'Right'].includes(snakeDirection) && !['ArrowRight', 'ArrowLeft'].includes(e.key)
-            ){
+            ['Up', 'Down'].includes(snakeDirection) && !['ArrowDown', 'ArrowUp'].includes(e.key) ||
+            ['Left', 'Right'].includes(snakeDirection) && !['ArrowRight', 'ArrowLeft'].includes(e.key)
+        ){
 
-                //Updating snake direction
-                snakeDirection = e.key.replace('Arrow', '');
-                
-                //Clearing current function instance and running a new one
-                gameTimeout.destroy();
-                gameFunction();
-            }
+            //Updating snake direction
+            snakeDirection = e.key.replace('Arrow', '');
+            
+            //Clearing current function instance and running a new one to prevent snake turning into itself
+            gameTimeout.destroy();
+            gameFunction();
+        }
 
         //Rotating snake's head accordingly
         snakeHead.style.transform = `rotate(${snakeDirectionRotation[snakeDirection]}deg)`;
@@ -352,7 +346,6 @@ const createBodyPart = () => {
 
 //Game function
 const gameFunction = () => {
-
     //Storing snake head's last position and if it's not only head
     if (snakeLength > 1){
         snakeHeadLastPosition.unshift([snakeBodyCoordinates[0][0], snakeBodyCoordinates[0][1]]);
@@ -366,18 +359,21 @@ const gameFunction = () => {
         //If the snake has reached top wall, move it to the start of the bottom wall
         if (snakeBodyCoordinates[0][1] < gameContainerBounds[2]) snakeBodyCoordinates[0][1] = gameContainerBounds[3] - parseInt(snakeBody[0].style.height);
     }
+
     if (snakeDirection == 'Down'){
         snakeBodyCoordinates[0][1] += moveValue;
 
         //If the snake has reached bottom wall, move it to the start of the top wall
         if (snakeBodyCoordinates[0][1] >= gameContainerBounds[3]) snakeBodyCoordinates[0][1] = gameContainerBounds[2]
     }
+
     if (snakeDirection == 'Left'){
         snakeBodyCoordinates[0][0] -= moveValue;
 
         //If the snake has reached left wall, move it to the start of the right wall
         if (snakeBodyCoordinates[0][0] < gameContainerBounds[0]) snakeBodyCoordinates[0][0] = gameContainerBounds[1] - parseInt(snakeBody[0].style.height);
     }
+
     if (snakeDirection == 'Right'){
         snakeBodyCoordinates[0][0] += moveValue;
 
@@ -386,8 +382,9 @@ const gameFunction = () => {
     }
 
     //Checking if snake's next step means colission with its own body, if so, end the game, and if snake isn't invincible (didn't consume a powerup)
-    if (!invincible && snakeHeadLastPosition.some(coordinate => snakeBodyCoordinates[0][0] == coordinate[0] && snakeBodyCoordinates[0][1] == coordinate[1]))
+    if (!invincible && snakeHeadLastPosition.some(coordinate => snakeBodyCoordinates[0][0] == coordinate[0] && snakeBodyCoordinates[0][1] == coordinate[1])){
         gameLost();
+    }
 
     else {
         snakeHead.style.left = snakeBodyCoordinates[0][0] + 'px' //Update snakeHead X position
@@ -412,7 +409,7 @@ const gameFunction = () => {
             if (foodSound.src != 'resources/sounds/food.mp3') foodSound.src = 'resources/sounds/food.mp3';
             if (!gameMusicPaused) foodSound.play();
             gameScore++;
-            settingsWindow.querySelector('#score').innerText = `Score: ${gameScore}`;
+            settingsWindow.querySelector('#score').textContent = `Score: ${gameScore}`;
             food.remove();
             food = spawnFood('food');
         }
@@ -471,7 +468,7 @@ const gameFunction = () => {
             }
 
             if (!gameMusicPaused) foodSound.play();
-            settingsWindow.querySelector('#score').innerText = `Score: ${gameScore}`;
+            settingsWindow.querySelector('#score').textContent = `Score: ${gameScore}`;
             snakeLength = snakeBody.length;
             inedible.remove();
             inedible = null;
@@ -486,7 +483,6 @@ const gameFunction = () => {
         
         //Continue game if it's not paused
         if(!paused && snakeLength > 0){
-            gameTimeout.destroy();
             gameTimeout = new Timer(gameFunction, gameInterval, true);
         }
     }
