@@ -1,5 +1,5 @@
 # Snek Gaem
-An old popular snake game that used to be hit on old nokia 3310 devices, refurbished.
+An old popular snake game that used to be hit on old nokia 3310 devices, now with powerups!
 
 ### How to play
 Control your snake using movement keys in order to consume the animals that randomly spawn on the ground.
