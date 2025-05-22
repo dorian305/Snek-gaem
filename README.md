@@ -12,6 +12,3 @@ Consuming 💥, if not invincible, will damage your snake and remove one size fr
 | Movement               | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>                                            |
 | Toggle music           | <kbd>M</kbd>                                                                                   |
 | Pause / resume         | <kbd>P</kbd>                                                                                   |
-
-### Play
-http://snek.manjaric.com
